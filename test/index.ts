@@ -1,24 +1,25 @@
 import { test } from '@bicycle-codes/tapzero'
-import { components } from '@ssc-half-light/node-components'
-import * as odd from '@oddjs/odd'
-import { create as createMsg, SignedPost } from '../src/index.js'
-import { create as createID, Identity } from '@bicycle-codes/identity'
+import { createCryptoComponent } from '@ssc-half-light/node-components'
+import { Identity, create as createID } from '@bicycle-codes/identity'
+import { Implementation } from '@oddjs/odd/lib/components/crypto/implementation'
+import {
+    create as createMsg,
+    SignedPost,
+    lipmaaLink,
+    createBatch
+} from '../src/index.js'
 
-let program:odd.Program
 let alice:Identity
+let alicesCrytpo:Implementation
 
 test('setup', async t => {
-    program = await odd.assemble({
-        namespace: { creator: 'test', name: 'testing' },
-        debug: false
-    }, components)
+    alicesCrytpo = await createCryptoComponent()
 
-    alice = await createID(program.components.crypto, {
+    alice = await createID(alicesCrytpo, {
         humanName: 'alice',
         humanReadableDeviceName: 'computer'
     })
 
-    t.ok(program, 'create a program')
     t.ok(alice, 'create an identity')
 })
 
@@ -26,9 +27,8 @@ let post:SignedPost
 test('create a new message', async t => {
     post = await createMsg(
         alice,
-        program.components.crypto.keystore,
+        alicesCrytpo,
         {
-            username: 'alice',
             seq: 1,
             prev: null,
             content: {
@@ -37,5 +37,33 @@ test('create a new message', async t => {
         }
     )
 
+    console.log('**msg**', post)
+
     t.ok(post, 'should create a message')
+})
+
+test('get a limpaa link', t => {
+    const link = lipmaaLink(1)
+    console.log('**link**', link)
+    const arr = [...Array(10).keys()]
+    console.log('arrrr', arr.map(n => {
+        return { lipmaa: lipmaaLink(n), index: n }
+    }))
+    t.ok(typeof link === 'number', 'should return a link')
+})
+
+test('create a linked list', async t => {
+    const newMsgs = [
+        { content: { text: 'hello1' } },
+        { content: { text: 'hello1' } },
+        { content: { text: 'hello1' } },
+        { content: { text: 'hello1' } },
+        { content: { text: 'hello1' } }
+    ]
+
+    const list = await createBatch(alice, alicesCrytpo, newMsgs)
+
+    t.ok(list, 'should create a list')
+
+    console.log('**the list**', list)
 })

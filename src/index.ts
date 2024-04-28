@@ -1,20 +1,20 @@
 import ts from 'monotonic-timestamp'
 import type { Implementation } from '@oddjs/odd/components/crypto/implementation'
 import { SignedMessage } from '@bicycle-codes/message'
-import { createDebug } from '@nichoth/debug'
+// import { createDebug } from '@nichoth/debug'
 import { blake3 } from '@noble/hashes/blake3'
 import { DID, Identity, sign } from '@bicycle-codes/identity'
 import { toString } from 'uint8arrays/to-string'
 import stringify from 'json-canon'
-type KeyStore = Implementation['keystore']
-const debug = createDebug()
+// type KeyStore = Implementation['keystore']
+// const debug = createDebug()
 
 export interface Metadata {
     timestamp:number;
     proof:string,
     key:string,
     seq:number;
-    lipmalink:string;
+    lipmaalink:string|null;
     prev:string|null;
     username:string;
     author:DID;
@@ -44,32 +44,79 @@ export type EncryptedPost = { metadata:SignedMetadata, content:string }
  */
 export async function create (
     user:Identity,
-    keystore:KeyStore,
+    crypto:Implementation,
     opts:{
-        username:string,
         content:Content,
+        limpaalink?:string|null,
         seq:number,
-        prev:SignedPost|null|undefined,  // the hash of the previous message
+        prev:SignedPost|null|undefined,
     }
 ):Promise<SignedPost> {
     const metadata:Partial<SignedMetadata> = {
         timestamp: ts(),
         proof: toString(blake3(stringify(opts.content)), 'base64pad'),
         author: user.rootDID,
-        prev: '',
-        lipmalink: '',
+        prev: opts.prev?.metadata.key || null,  // hash of the previous message
+        lipmaalink: opts.limpaalink,
         username: user.username,
         seq: (opts.prev?.metadata.seq || 0) + 1,
     }
 
     const str = stringify(metadata)
-    metadata.signature = toString(await sign(keystore, str), 'base64pad')
-    const key = toString(blake3(str))
+    metadata.signature = toString(await sign(crypto.keystore, str), 'base64pad')
+    const key = toString(blake3(stringify(metadata)), 'base64url')
 
     return {
         metadata: { ...metadata, key } as SignedMetadata,
         content: opts.content
     }
+}
+
+/**
+ * Create a linked list of messages.
+ */
+
+// we need a function that will get the key of the lipmaa linked entry
+
+function getKey (msg:SignedPost) {
+    return msg.metadata.key
+}
+
+export async function createBatch (
+    user:Identity,
+    crypto:Implementation,
+    opts:{
+        content:Content,
+        seq?:number,
+        prev?:SignedPost|null|undefined,
+    }[],
+    _out?:SignedPost[]
+):Promise<SignedPost[]> {
+    const out = _out || []
+
+    if (!opts.length) return out
+
+    const msg = opts.shift()
+    const lipmaaIndex = lipmaaLink(msg?.seq ?? out.length)
+    console.log('**limpa index**', lipmaaIndex)
+    console.log('** out length**', out.length)
+    const i = lipmaaIndex < 0 ? 0 : lipmaaIndex
+    const processedMsg = out[i]
+    console.log('**prcscs msg**', !!processedMsg)
+    const lipmaaKey = processedMsg ? getKey(out[i]) : null
+
+    console.log('**lipmaa key**', lipmaaKey)
+
+    const newMsg = await create(user, crypto, {
+        ...msg!,
+        seq: msg?.seq ?? out.length,
+        prev: out[out.length - 1] || null,
+        limpaalink: lipmaaKey
+    })
+
+    out.push(newMsg)
+
+    return createBatch(user, crypto, opts, out)
 }
 
 /**
@@ -103,3 +150,39 @@ export async function create (
  * Given a new entry and an existing log,
  * what is the lipma link in the new entry?
  */
+
+/**
+ * Calculate the lipma link for any entry.
+ *
+ * This returns the `seq` number of the entry to link to.
+ *
+ * @param n The sequence number to calculate the link for
+ */
+export const lipmaaLink = function lipmaaLink (n:number):number {
+    let m = 1
+    let po3 = 3
+    let x = n
+
+    // find k such that (3^k - 1)/2 >= n
+    while (m < n) {
+        po3 = po3 * 3
+        m = Math.floor((po3 - 1) / 2)
+    }
+
+    po3 = Math.floor(po3 / 3)
+
+    // find longest possible backjump
+    if (m !== n) {
+        while (x !== 0) {
+            m = Math.floor((po3 - 1) / 2)
+            po3 = Math.floor(po3 / 3)
+            x = x % m
+        }
+
+        if (m !== po3) {
+            po3 = m
+        }
+    }
+
+    return n - po3
+}
