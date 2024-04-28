@@ -47,7 +47,7 @@ export async function create (
     crypto:Implementation,
     opts:{
         content:Content,
-        limpaalink?:string|null,
+        limpaalink?:string|null,  // <-- the key of the lipmaa message
         seq:number,
         prev:SignedPost|null|undefined,
     }
@@ -78,14 +78,13 @@ export async function create (
 
 // we need a function that will get the key of the lipmaa linked entry
 
-function getKey (msg:SignedPost) {
-    return msg.metadata.key
-}
-
 export async function createBatch (
     user:Identity,
     crypto:Implementation,
-    opts:{
+    opts: {
+        getKeyFromIndex:(i:number, msgs:SignedPost[]) => Promise<string|null>
+    },
+    msgs:{
         content:Content,
         seq?:number,
         prev?:SignedPost|null|undefined,
@@ -94,29 +93,26 @@ export async function createBatch (
 ):Promise<SignedPost[]> {
     const out = _out || []
 
-    if (!opts.length) return out
+    if (!msgs.length) return out
 
-    const msg = opts.shift()
-    const lipmaaIndex = lipmaaLink(msg?.seq ?? out.length)
-    console.log('**limpa index**', lipmaaIndex)
-    console.log('** out length**', out.length)
-    const i = lipmaaIndex < 0 ? 0 : lipmaaIndex
-    const processedMsg = out[i]
-    console.log('**prcscs msg**', !!processedMsg)
-    const lipmaaKey = processedMsg ? getKey(out[i]) : null
-
-    console.log('**lipmaa key**', lipmaaKey)
+    const msg = msgs.shift()
+    const lipmaaIndex = lipmaaLink(
+        msg?.seq ?? (out.length - 1 < 0 ? 0 : out.length - 1)
+    )
+    const lipmaaKey = lipmaaIndex ?
+        await opts.getKeyFromIndex(lipmaaIndex, out) :
+        null
 
     const newMsg = await create(user, crypto, {
         ...msg!,
-        seq: msg?.seq ?? out.length,
+        seq: out.length - 1,
         prev: out[out.length - 1] || null,
         limpaalink: lipmaaKey
     })
 
     out.push(newMsg)
 
-    return createBatch(user, crypto, opts, out)
+    return createBatch(user, crypto, opts, msgs, out)
 }
 
 /**
@@ -184,5 +180,5 @@ export const lipmaaLink = function lipmaaLink (n:number):number {
         }
     }
 
-    return n - po3
+    return (n - po3) < 0 ? 0 : n - po3
 }
