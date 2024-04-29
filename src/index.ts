@@ -109,15 +109,19 @@ export async function createBatch (
 
     const msg = msgs.shift()
     const lipmaaIndex = lipmaaLink(
-        msg?.seq ?? (out.length - 1 < 0 ? 0 : out.length - 1)
+        msg?.seq ?? out.length + 1
     )
+
     const lipmaaKey = lipmaaIndex ?
-        await opts.getKeyFromIndex(lipmaaIndex, out) :
+        (await opts.getKeyFromIndex(
+            lipmaaIndex - 1 < 0 ? 0 : lipmaaIndex - 1,
+            out
+        )) :
         null
 
     const newMsg = await create(user, crypto, {
         ...msg!,
-        seq: out.length - 1,
+        seq: out.length,
         prev: out[out.length - 1] || null,
         limpaalink: lipmaaKey
     })
