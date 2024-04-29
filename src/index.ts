@@ -1,13 +1,10 @@
 import ts from 'monotonic-timestamp'
 import type { Implementation } from '@oddjs/odd/components/crypto/implementation'
 import { SignedMessage } from '@bicycle-codes/message'
-// import { createDebug } from '@nichoth/debug'
 import { blake3 } from '@noble/hashes/blake3'
 import { DID, Identity, sign, verifyFromString } from '@bicycle-codes/identity'
 import { toString } from 'uint8arrays/to-string'
 import stringify from 'json-canon'
-// type KeyStore = Implementation['keystore']
-// const debug = createDebug()
 
 export interface Metadata {
     timestamp:number;
@@ -83,6 +80,35 @@ export async function isValid (msg:SignedPost):Promise<boolean> {
     const str = stringify(_msg)
     const isOk = await verifyFromString(str, signature, msg.metadata.author)
     return isOk
+}
+
+export async function verifyLipmaas (list:SignedPost[], {
+    messageFromKey
+}:{
+    messageFromKey:(key:string)=>Promise<SignedPost>
+}, msg:SignedPost, path?:number[]):Promise<{ isOk: boolean, path:number[] }> {
+    // find the shortest path to the first message
+    // we are assuming the `seq` number in the message
+    // is +1 the message's index
+
+    path = (path || []).concat(msg.metadata.seq)
+
+    // check the message signature
+    const isOk = await isValid(msg)
+    if (!isOk) return { isOk: false, path }
+
+    // we are at the first message
+    if (!msg.metadata.lipmaalink) {
+        return {
+            // be sure there is not an invalid sequence
+            isOk: isOk && msg.metadata.seq <= 1,
+            path
+        }
+    }
+
+    const next = await messageFromKey(msg.metadata.lipmaalink)
+
+    return await verifyLipmaas(list, { messageFromKey }, next, path)
 }
 
 /**

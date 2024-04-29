@@ -8,7 +8,8 @@ import {
     lipmaaLink,
     createBatch,
     getLipmaaPath,
-    isValid
+    isValid,
+    verifyLipmaas
 } from '../src/index.js'
 
 let alice:Identity
@@ -72,6 +73,7 @@ async function getKey (i:number, msgs:SignedPost[]):Promise<string|null> {
 }
 
 let list:SignedPost[]
+let list2:SignedPost[]
 test('create a linked list', async t => {
     const newMsgs = [
         { content: { text: 'hello 1' } },
@@ -95,7 +97,7 @@ test('create a linked list', async t => {
     })
 
     // create a list with 40 items
-    const list2 = await createBatch(alice, alicesCrytpo, {
+    list2 = await createBatch(alice, alicesCrytpo, {
         getKeyFromIndex: getKey
     }, arr)
 
@@ -124,6 +126,28 @@ test('verify messages', async t => {
     )
 
     t.ok(!notOk, 'should not verify an invalid signature')
+})
+
+async function messageFromKey (key) {
+    return list2.find(post => {
+        return post.metadata.key === key
+    }) as SignedPost
+}
+
+test('verify lipmaa links', async t => {
+    const { isOk, path } = await verifyLipmaas(list2, {
+        messageFromKey
+    }, list2[39])
+
+    t.ok(isOk, 'should verify message 40')
+    t.deepEqual(path, [40, 13, 4, 1], 'should return the expected path')
+
+    const { isOk: isOk2, path: path2 } = await verifyLipmaas(list2, {
+        messageFromKey
+    }, list2[24])
+    t.ok(isOk2, 'should verify message 26')
+
+    console.log('path2', path2)
 })
 
 function expectedLipmas () {
