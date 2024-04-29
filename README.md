@@ -18,6 +18,7 @@ npm i -S @bicycle-codes/ailuropoda
 ```
 
 ## use
+Import types and functions.
 
 ```js
 import {
@@ -31,11 +32,49 @@ import {
 } from '@bicycle-codes/ailuropoda'
 ```
 
-## example
+## data format
+Log entries are `{ metadata, content }`, where metadata is
+a signed object like below.
 
+### Metadata
+```ts
+interface Metadata {
+    timestamp:number;
+    proof:string,
+    key:string,
+    seq:number;
+    lipmaalink:string|null;
+    prev:string|null;
+    username:string;
+    author:DID;
+}
+```
+
+### SignedMetadata
+```ts
+import { SignedMessage } from '@bicycle-codes/message'
+
+type SignedMetadata = SignedMessage<Metadata>
+```
+
+### Content
+```ts
+export interface Content {
+    text:string,
+    alt?:string[],
+    mentions?:string[]
+}
+```
+
+### SignedPost
+```ts
+type SignedPost = { metadata:SignedMetadata, content:Content }
+```
+
+## example
 Use the function `createBatch` to create a list with lipmaa links.
 
-See [the diagram](https://github.com/AljoschaMeyer/bamboo?tab=readme-ov-file#links-and-entry-verification) of the list structure.
+See [the diagram](https://github.com/AljoschaMeyer/bamboo?tab=readme-ov-file#links-and-entry-verification) for a nice the list structure.
 
 ```ts
 import { Identity, create as createID } from '@bicycle-codes/identity'
@@ -68,8 +107,9 @@ const list = await createBatch(alice, alicesCrytpo, {
 
 ## API
 
-### create
-Create a message.
+### `create (user, crypto, opts)`
+Create a message. This does not deal with lipmaa links. You would need to
+pass them in.
 
 ```ts
 async function create (
@@ -99,3 +139,110 @@ const post = await createMsg(
     }
 )
 ```
+
+### `isValid (message)`
+
+Verify a message. This does not look at links, only the signature.
+
+```ts
+async function isValid (msg:SignedPost):Promise<boolean>
+```
+
+```ts
+const isOk = await isValid(post)
+// => true
+```
+
+### `verifyLipmaas (list, { messageFromKey }, msg, path)`
+
+Check that all the messages between the given message and message number 1 are
+valid. This will use the shortest path from the given message to the
+first message.
+
+```ts
+async function verifyLipmaas (
+    list:SignedPost[],
+    { messageFromKey }:{
+        messageFromKey:(key:string)=>Promise<SignedPost>
+    }, msg:SignedPost, path?:number[]
+):Promise<{
+    isOk: boolean,
+    path:number[]
+}>
+```
+
+```ts
+const { isOk, path } = await verifyLipmaas(list2, {
+    messageFromKey
+}, list2[39])  // array is 0 indexed, so 39 is seq number 40
+
+// isOk = true
+// path = [40, 13, 4, 1]
+```
+
+### `getLipmaaPath (seq, prev)`
+Get the shortest path between the given sequence number and
+the first message.
+
+```ts
+function getLipmaaPath (seq:number, prev?:number[]):number[]
+```
+
+Return an array of sequence numbers, starting with the first:
+```js
+[ 1, 4, 13 ]
+```
+
+### `createBatch (user, crypto, opts, messages)`
+Create a linked list of the given messages, with lipmaa links.
+
+```ts
+async function createBatch (
+    user:Identity,
+    crypto:Implementation,
+    opts: {
+        getKeyFromIndex:(i:number, msgs:SignedPost[]) => Promise<string|null>
+    },
+    msgs:{
+        content:Content,
+        seq?:number,
+        prev?:SignedPost|null|undefined,
+    }[],
+    _out?:SignedPost[]
+):Promise<SignedPost[]>
+```
+
+#### `createBatch` example
+
+Create a linked list with in-memory content, starting from entry number 1.
+
+Note in the example, `getKey` is synchronous, but we need to return a
+promise because that's what the API expects.
+
+Takes a parameter `getKeyFromIndex` that will return the key for an entry
+given its index.
+
+```ts
+const newMsgs = [
+    { content: { text: 'hello 1' } },
+    { content: { text: 'hello 2' } },
+    { content: { text: 'hello 3' } },
+    { content: { text: 'hello 4' } },
+    { content: { text: 'hello 5' } }
+]
+
+const list = await createBatch(alice, alicesCrytpo, {
+    getKeyFromIndex: getKey
+}, newMsgs)
+
+async function getKey (i:number, msgs:SignedPost[]):Promise<string|null> {
+    const msg = msgs[i]
+    if (!msg) return null
+    return msg.metadata.key
+}
+```
+
+## docs
+Generated via typescript.
+
+[bicycle-codes.github.io/ailuropoda](https://bicycle-codes.github.io/ailuropoda/)

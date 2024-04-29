@@ -64,6 +64,7 @@ test('get lipmaa path', t => {
     const path3 = getLipmaaPath(28)
     t.deepEqual(path3, [1, 4, 13, 26, 27],
         'should return the correct path for seq 28')
+    console.log('lipmaa path', path2)
 })
 
 async function getKey (i:number, msgs:SignedPost[]):Promise<string|null> {
@@ -86,6 +87,8 @@ test('create a linked list', async t => {
     list = await createBatch(alice, alicesCrytpo, {
         getKeyFromIndex: getKey
     }, newMsgs)
+
+    console.log('**the list**', list)
 
     t.ok(list, 'should create a list')
 
