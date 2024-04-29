@@ -1,11 +1,15 @@
 {
-  "private": true,
-  "type": "module",
+  "name": "@bicycle-codes/ailuropoda",
   "version": "0.0.0",
+  "description": "Bamboo implemented in typescript",
+  "type": "module",
   "main": "dist/index.js",
   "files": [
     "./dist/*"
   ],
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
     "lint": "eslint \"./**/*.{ts,js}\"",
     "test": "npm run lint && npm run build && npm run test-node",
@@ -61,5 +65,22 @@
     }
   },
   "author": "nichoth <nichoth@gmail.com> (https://nichoth.com)",
-  "license": "MIT"
+  "license": "MIT",
+  "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bicycle-codes/ailuropoda.git"
+  },
+  "keywords": [
+    "bamboo",
+    "lipmaa",
+    "linked",
+    "list",
+    "merkle",
+    "dag"
+  ],
+  "bugs": {
+    "url": "https://github.com/bicycle-codes/ailuropoda/issues"
+  },
+  "homepage": "https://github.com/bicycle-codes/ailuropoda#readme"
 }
