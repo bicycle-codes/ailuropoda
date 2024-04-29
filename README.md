@@ -118,8 +118,6 @@ function lipmaaLink (n:number):number
 #### `lipmaaLink` example
 
 ```js
-const arr = 
-
 const lipmaas = ([...Array(41).keys()]).map(n => {
     return { lipmaa: lipmaaLink(n), n }
 })
