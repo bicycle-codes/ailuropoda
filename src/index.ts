@@ -59,8 +59,10 @@ export async function create (
         seq: (opts.prev?.metadata.seq || 0) + 1,
     }
 
-    const str = stringify(metadata)
-    metadata.signature = toString(await sign(crypto.keystore, str), 'base64pad')
+    metadata.signature = toString(
+        await sign(crypto.keystore, stringify(metadata)),
+        'base64pad'
+    )
     const key = toString(blake3(stringify(metadata)), 'base64url')
 
     return {

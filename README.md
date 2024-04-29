@@ -41,7 +41,7 @@ a signed object like below.
 interface Metadata {
     timestamp:number;
     proof:string,
-    key:string,
+    key:string,  // <-- base64url encoded
     seq:number;
     lipmaalink:string|null;
     prev:string|null;
@@ -74,7 +74,7 @@ type SignedPost = { metadata:SignedMetadata, content:Content }
 ## example
 Use the function `createBatch` to create a list with lipmaa links.
 
-See [the diagram](https://github.com/AljoschaMeyer/bamboo?tab=readme-ov-file#links-and-entry-verification) for a nice the list structure.
+See [the diagram](https://github.com/AljoschaMeyer/bamboo?tab=readme-ov-file#links-and-entry-verification) for a nice visualization of the list structure.
 
 ```ts
 import { Identity, create as createID } from '@bicycle-codes/identity'
@@ -106,6 +106,54 @@ const list = await createBatch(alice, alicesCrytpo, {
 ```
 
 ## API
+
+### `lipmaaLink (n)`
+
+Get the lipmaa number number given a sequence number.
+
+```ts
+function lipmaaLink (n:number):number
+```
+
+#### `lipmaaLink` example
+
+```js
+const arr = 
+
+const lipmaas = ([...Array(41).keys()]).map(n => {
+    return { lipmaa: lipmaaLink(n), n }
+})
+```
+
+`lipmaas` is like this:
+```js
+ [
+    { lipmaa: 0, n: 0 },   { lipmaa: 0, n: 1 },
+    { lipmaa: 1, n: 2 },   { lipmaa: 2, n: 3 },
+    { lipmaa: 1, n: 4 },   { lipmaa: 4, n: 5 },
+    { lipmaa: 5, n: 6 },   { lipmaa: 6, n: 7 },
+    { lipmaa: 4, n: 8 },   { lipmaa: 8, n: 9 },
+    { lipmaa: 9, n: 10 },  { lipmaa: 10, n: 11 },
+    { lipmaa: 8, n: 12 },  { lipmaa: 4, n: 13 },
+    { lipmaa: 13, n: 14 }, { lipmaa: 14, n: 15 },
+    { lipmaa: 15, n: 16 }, { lipmaa: 13, n: 17 },
+    { lipmaa: 17, n: 18 }, { lipmaa: 18, n: 19 },
+    { lipmaa: 19, n: 20 }, { lipmaa: 17, n: 21 },
+    { lipmaa: 21, n: 22 }, { lipmaa: 22, n: 23 },
+    { lipmaa: 23, n: 24 }, { lipmaa: 21, n: 25 },
+    { lipmaa: 13, n: 26 }, { lipmaa: 26, n: 27 },
+    { lipmaa: 27, n: 28 }, { lipmaa: 28, n: 29 },
+    { lipmaa: 26, n: 30 }, { lipmaa: 30, n: 31 },
+    { lipmaa: 31, n: 32 }, { lipmaa: 32, n: 33 },
+    { lipmaa: 30, n: 34 }, { lipmaa: 34, n: 35 },
+    { lipmaa: 35, n: 36 }, { lipmaa: 36, n: 37 },
+    { lipmaa: 34, n: 38 }, { lipmaa: 26, n: 39 },
+    { lipmaa: 13, n: 40 }
+]
+```
+
+Note the `lipmaa` vs `n` properties match with [this diagram](https://github.com/AljoschaMeyer/bamboo?tab=readme-ov-file#links-and-entry-verification).
+
 
 ### `create (user, crypto, opts)`
 Create a message. This does not deal with lipmaa links. You would need to
