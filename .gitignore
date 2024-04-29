@@ -6,3 +6,4 @@ src/*.js
 dist
 .env
 public
+docs

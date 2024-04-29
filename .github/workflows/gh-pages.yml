@@ -33,11 +33,11 @@ jobs:
       - name: Install
         run: npm install
       - name: Build
-        run: npm run build-example
+        run: npm run build-docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: public/
+          path: docs
 
   # Deployment job
   deploy:

@@ -1,5 +1,7 @@
 # ailuropoda
 
+![tests](https://github.com/bicycle-codes/ailuropoda/actions/workflows/nodejs.yml/badge.svg)
+
 Implementing [bamboo](https://github.com/AljoschaMeyer/bamboo), using only browser compatible cryptography.
 
 ## install
