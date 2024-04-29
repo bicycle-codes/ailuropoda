@@ -8,7 +8,6 @@
   ],
   "scripts": {
     "lint": "eslint \"./**/*.{ts,js}\"",
-    "build-tests": "esbuild test/index.ts --platform=node --target=es2022 --bundle --keep-names > test/test-bundle.js",
     "test": "npm run lint && npm run build && npm run test-node",
     "test-node": "esbuild ./src/index.ts > ./src/index.js && cd test && esbuild ./index.ts --platform=node --format=esm | node --input-type=module | tap-spec",
     "build-cjs": "esbuild src/*.ts --format=cjs --keep-names --tsconfig=tsconfig.build.json --outdir=./dist --out-extension:.js=.cjs --sourcemap=inline",
