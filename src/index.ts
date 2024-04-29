@@ -74,8 +74,9 @@ export async function create (
 
 /**
  * Check that a signature matches the given message.
+ *
  * @param {SignedPost} msg The message to check
- * @returns {boolean} True or false if the signature matches
+ * @returns {Promise<boolean>} True or false if the signature matches
  */
 export async function isValid (msg:SignedPost):Promise<boolean> {
     const { signature, key: _, ..._msg } = msg.metadata
@@ -146,44 +147,12 @@ export function getLipmaaPath (index:number, prev?:number[]):number[] {
 }
 
 /**
- * @see {@link https://github.com/AljoschaMeyer/bamboo?tab=readme-ov-file#concepts-and-properties bamboo docs}
- *
- * > Conceptually, an entry in the log is a tuple of
- *   - tag, either a zero byte (0x00) to indicate a regular log entry, or a one
- *     byte (0x01) to indicate an end-of-log marker. No other values are valid.
- *     This can serve as an extension point: Future protocols that should be
- *     compatible with bamboo can use different tag values to introduce new
- *     functionality, for example signing primitives other than ed25519.
- *   - author -- the public key
- *   - log ID -- a 64 bit integer serves to distinguish different logs by the
- *     same author, encoded as a canonical VarU64
- *   - sequence number of the entry (i.e. the offset in the log)
- *   - the backlink, a cryptographically secure hash of the previous entry in
- *     the log
- *   - the lipmaalink, a cryptographically secure hash of some older entry in
- *     the log, chosen such that there are short paths between any pair
- *     of entries
- *   - the hash of the actual payload of the entry
- *   - the size of the payload in bytes
- *   - a boolean that indicates whether this is a regular entry or an
- *     end-of-log marker
- *   - the digital signature of all the previous data, issued with the
- *     log's public key
- */
-
-/**
- * Need to figure out the limpaa link.
- * Given a new entry and an existing log,
- * what is the lipma link in the new entry?
- */
-
-/**
  * Calculate the lipma link for any entry.
- *
  * This returns the `seq` number of the entry to link to.
  *
+ * @see {@link https://github.com/AljoschaMeyer/bamboo?tab=readme-ov-file#concepts-and-properties bamboo docs}
+ *
  * @param n The sequence number to calculate the link for.
- *          Should be 0 indexed.
  */
 export function lipmaaLink (n:number):number {
     let m = 1

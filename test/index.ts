@@ -7,7 +7,8 @@ import {
     SignedPost,
     lipmaaLink,
     createBatch,
-    getLipmaaPath
+    getLipmaaPath,
+    isValid
 } from '../src/index.js'
 
 let alice:Identity
@@ -37,8 +38,6 @@ test('create a new message', async t => {
             }
         }
     )
-
-    // console.log('**msg**', post)
 
     t.ok(post, 'should create a message')
 })
@@ -110,9 +109,22 @@ test('create a linked list', async t => {
         'should have the right link 13 -> 4')
 })
 
-// test('verify messages in the list', async t => {
-//     const path = getLipmaaPath(5)
-// })
+test('verify messages', async t => {
+    const isOk = await isValid(post)
+    t.ok(isOk, 'A message can be verified')
+
+    const notOk = await isValid(
+        {
+            ...post,
+            metadata: {
+                ...post.metadata,
+                signature: post.metadata.signature + 'abc'
+            }
+        }
+    )
+
+    t.ok(!notOk, 'should not verify an invalid signature')
+})
 
 function expectedLipmas () {
     return [
