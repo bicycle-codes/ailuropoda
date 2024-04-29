@@ -3,7 +3,7 @@ import type { Implementation } from '@oddjs/odd/components/crypto/implementation
 import { SignedMessage } from '@bicycle-codes/message'
 // import { createDebug } from '@nichoth/debug'
 import { blake3 } from '@noble/hashes/blake3'
-import { DID, Identity, sign } from '@bicycle-codes/identity'
+import { DID, Identity, sign, verifyFromString } from '@bicycle-codes/identity'
 import { toString } from 'uint8arrays/to-string'
 import stringify from 'json-canon'
 // type KeyStore = Implementation['keystore']
@@ -72,6 +72,11 @@ export async function create (
     }
 }
 
+export async function isValid (msg:SignedPost):Promise<boolean> {
+    const { signature: __, key: _, ..._msg } = msg.metadata
+    const isOk = verifyFromString()
+}
+
 /**
  * Create a linked list of messages.
  */
@@ -116,6 +121,20 @@ export async function createBatch (
 }
 
 /**
+ * Get the shortest path to the first entry.
+ *
+ * @param index The index to get a path for
+ */
+export function getLipmaaPath (index:number, prev?:number[]):number[] {
+    const n = lipmaaLink(index)
+    if (n <= 1 && index < 3) {
+        return prev || []
+    }
+
+    return getLipmaaPath(n, [n].concat(prev || []))
+}
+
+/**
  * @see {@link https://github.com/AljoschaMeyer/bamboo?tab=readme-ov-file#concepts-and-properties bamboo docs}
  *
  * > Conceptually, an entry in the log is a tuple of
@@ -152,9 +171,10 @@ export async function createBatch (
  *
  * This returns the `seq` number of the entry to link to.
  *
- * @param n The sequence number to calculate the link for
+ * @param n The sequence number to calculate the link for.
+ *          Should be 0 indexed.
  */
-export const lipmaaLink = function lipmaaLink (n:number):number {
+export function lipmaaLink (n:number):number {
     let m = 1
     let po3 = 3
     let x = n

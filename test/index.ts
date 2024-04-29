@@ -6,7 +6,8 @@ import {
     create as createMsg,
     SignedPost,
     lipmaaLink,
-    createBatch
+    createBatch,
+    getLipmaaPath
 } from '../src/index.js'
 
 let alice:Identity
@@ -42,10 +43,11 @@ test('create a new message', async t => {
     t.ok(post, 'should create a message')
 })
 
+let lipmaas:{ lipmaa:number, index:number }[]
 test('get limpaa links', t => {
     const link = lipmaaLink(1)
     const arr = [...Array(41).keys()]
-    const lipmaas = arr.map(n => {
+    lipmaas = arr.map(n => {
         return { lipmaa: lipmaaLink(n), index: n }
     })
 
@@ -56,28 +58,43 @@ test('get limpaa links', t => {
     t.ok(typeof link === 'number', 'should return a link')
 })
 
+test('get lipmaa path', t => {
+    const path = getLipmaaPath(5)
+    t.deepEqual(path, [1, 4], 'should return the correct path for seq 5')
+    const path2 = getLipmaaPath(40)
+    t.deepEqual(path2, [1, 4, 13], 'should return the right path for seq 40')
+    const path3 = getLipmaaPath(28)
+    t.deepEqual(path3, [1, 4, 13, 26, 27],
+        'should return the correct path for seq 28')
+})
+
 async function getKey (i:number, msgs:SignedPost[]) {
     const msg = msgs[i + 1]  // 0 index vs 1 seq
     if (!msg) return null
     return msg.metadata.key
 }
 
+let list:SignedPost[]
 test('create a linked list', async t => {
     const newMsgs = [
-        { content: { text: 'hello' } },
-        { content: { text: 'hello' } },
-        { content: { text: 'hello' } },
-        { content: { text: 'hello' } },
-        { content: { text: 'hello' } }
+        { content: { text: 'hello 1' } },
+        { content: { text: 'hello 2' } },
+        { content: { text: 'hello 3' } },
+        { content: { text: 'hello 4' } },
+        { content: { text: 'hello 5' } }
     ]
 
-    const list = await createBatch(alice, alicesCrytpo, {
+    list = await createBatch(alice, alicesCrytpo, {
         getKeyFromIndex: getKey
     }, newMsgs)
 
     t.ok(list, 'should create a list')
 
     console.log('**the list**', list)
+})
+
+test('verify messages in the list', async t => {
+
 })
 
 function expectedLipmas () {
