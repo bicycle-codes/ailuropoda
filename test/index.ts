@@ -155,6 +155,15 @@ test('verify lipmaa links', async t => {
     t.deepEqual(path2, [25, 21, 17, 13, 4, 1], 'should have the right path')
 })
 
+// test(
+//     'the case where all hashes and signatures are correct,' +
+//     ' but the link path is wrong (not the correct lipmaa path)',
+//     async t => {
+//         // all the links are correct, with correct hashes, but the hashes are
+//         // for the wrong messages (not the lipmaa path)
+//     }
+// )
+
 test('append a message', async t => {
     // create 39 messages
     const msgs = ([...Array(39).keys()]).map(n => {
@@ -181,6 +190,16 @@ test('append a message', async t => {
         'should have the right lipmaa link')
     const path = getLipmaaPath(newMsg.metadata.seq)
     t.deepEqual(path, [1, 4, 13], 'should have the right path from message 40')
+
+    const { isOk } = await verifyLipmaas({
+        messageFromKey: async (key:string) => {
+            return list.find(msg => {
+                return msg.metadata.key === key
+            }) as SignedPost
+        }
+    }, newMsg)
+
+    t.ok(isOk, 'should verify message 40')
 })
 
 function expectedLipmas () {

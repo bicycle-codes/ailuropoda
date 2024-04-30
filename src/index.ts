@@ -73,14 +73,20 @@ export async function create (
 }
 
 /**
- * Check that a signature matches the given message.
+ * Check that a signature matches the given message,
+ * and check that the message's hash is correct.
  *
  * @param {SignedPost} msg The message to check
  * @returns {Promise<boolean>} True or false if the signature matches
  */
 export async function isValid (msg:SignedPost):Promise<boolean> {
-    const { signature, key: _, ..._msg } = msg.metadata
+    const { signature, key, ..._msg } = msg.metadata
     const str = stringify(_msg)
+    const hash = toString(
+        blake3(stringify({ ..._msg, signature })),
+        'base64url'
+    )
+    if (hash !== key) return false
     const isOk = await verifyFromString(str, signature, msg.metadata.author)
     return isOk
 }
