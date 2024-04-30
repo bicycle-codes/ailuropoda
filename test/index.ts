@@ -9,7 +9,8 @@ import {
     createBatch,
     getLipmaaPath,
     isValid,
-    verifyLipmaas
+    verifyLipmaas,
+    append
 } from '../src/index.js'
 
 let alice:Identity
@@ -45,7 +46,7 @@ test('create a new message', async t => {
 
 let lipmaas:{ lipmaa:number, n:number }[]
 test('get limpaa links', t => {
-    const arr = [...Array(41).keys()]
+    const arr = [...Array(41).keys()]  // 40 messages
     lipmaas = arr.map(n => {
         return { lipmaa: lipmaaLink(n), n }
     })
@@ -138,19 +139,48 @@ async function messageFromKey (key) {
 }
 
 test('verify lipmaa links', async t => {
-    const { isOk, path } = await verifyLipmaas(list2, {
+    const { isOk, path } = await verifyLipmaas({
         messageFromKey
     }, list2[39])
 
     t.ok(isOk, 'should verify message 40')
     t.deepEqual(path, [40, 13, 4, 1], 'should return the expected path')
 
-    const { isOk: isOk2, path: path2 } = await verifyLipmaas(list2, {
+    const { isOk: isOk2, path: path2 } = await verifyLipmaas({
         messageFromKey
     }, list2[24])
     t.ok(isOk2, 'should verify message 26')
 
     console.log('path2', path2)
+    t.deepEqual(path2, [25, 21, 17, 13, 4, 1], 'should have the right path')
+})
+
+test('append a message', async t => {
+    // create 39 messages
+    const msgs = ([...Array(39).keys()]).map(n => {
+        return { content: { text: 'hello ' + (n + 1) } }
+    })
+
+    const list = await createBatch(alice, alicesCrytpo, {
+        getKeyFromIndex: async (i, msgs) => {
+            return msgs[i].metadata.key
+        },
+    }, msgs)
+
+    const newMsg = await append(alice, alicesCrytpo, {
+        getBySeq: async (seq) => {
+            return list[seq - 1]
+        },
+        prev: list[list.length - 1],
+        content: { text: 'hello 40' }
+    })
+
+    const msg13 = list[12]
+    t.ok(newMsg, 'should return a new message')
+    t.equal(msg13.metadata.key, newMsg.metadata.lipmaalink,
+        'should have the right lipmaa link')
+    const path = getLipmaaPath(newMsg.metadata.seq)
+    t.deepEqual(path, [1, 4, 13], 'should have the right path from message 40')
 })
 
 function expectedLipmas () {

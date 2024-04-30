@@ -33,10 +33,11 @@ export type SignedPost = { metadata:SignedMetadata, content:Content }
 export type EncryptedPost = { metadata:SignedMetadata, content:string }
 
 /**
- * Create a new message by the given identity.
+ * Create a new message by the given identity. This *does not* calculate the
+ * lipmaa link; it must be passed in.
  *
- * @param user The identity that is creating the message
- * @param keystore A keystore instance
+ * @param {Identity} user The identity that is creating the message
+ * @param {Implementation} crypto A keystore instance
  * @param opts Message data
  */
 export async function create (
@@ -84,7 +85,16 @@ export async function isValid (msg:SignedPost):Promise<boolean> {
     return isOk
 }
 
-export async function verifyLipmaas (list:SignedPost[], {
+/**
+ * Check that the given message is valid
+ * @param {{ messageFromKey }} opts A function that returns a message given
+ *  a key
+ * @param {SignedPost} msg The message to check
+ * @param {number[]} [path] Just used for recursion
+ * @returns {Promise<{ isOk:boolean, path:number[] }>} The validity and the
+ * path through the list.
+ */
+export async function verifyLipmaas ({
     messageFromKey
 }:{
     messageFromKey:(key:string)=>Promise<SignedPost>
@@ -94,6 +104,11 @@ export async function verifyLipmaas (list:SignedPost[], {
     // is +1 the message's index
 
     path = (path || []).concat(msg.metadata.seq)
+
+    /**
+     * @TODO
+     * check the hash also
+     */
 
     // check the message signature
     const isOk = await isValid(msg)
@@ -110,14 +125,12 @@ export async function verifyLipmaas (list:SignedPost[], {
 
     const next = await messageFromKey(msg.metadata.lipmaalink)
 
-    return await verifyLipmaas(list, { messageFromKey }, next, path)
+    return await verifyLipmaas({ messageFromKey }, next, path)
 }
 
 /**
  * Create a linked list of messages.
  */
-
-// we need a function that will get the key of the lipmaa linked entry
 
 export async function createBatch (
     user:Identity,
@@ -172,6 +185,32 @@ export function getLipmaaPath (index:number, prev?:number[]):number[] {
     }
 
     return getLipmaaPath(n, [n].concat(prev || []))
+}
+
+/**
+ * @TODO
+ * Create a new message following the given previous message.
+ */
+export async function append (
+    user:Identity,
+    crypto:Implementation,
+    opts:{
+        getBySeq:(seq:number) => Promise<SignedPost>
+        content:Content,
+        limpaalink?:string|null,  // <-- the key of the lipmaa message
+        prev:SignedPost
+    }
+):Promise<SignedPost> {
+    const newSeq = opts.prev.metadata.seq + 1
+    const lipmaaNumber = lipmaaLink(newSeq)
+    const newMsg = await create(user, crypto, {
+        seq: newSeq,
+        content: opts.content,
+        prev: opts.prev,
+        limpaalink: (await opts.getBySeq(lipmaaNumber)).metadata.key
+    })
+
+    return newMsg
 }
 
 /**
