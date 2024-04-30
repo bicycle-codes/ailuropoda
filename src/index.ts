@@ -111,11 +111,6 @@ export async function verifyLipmaas ({
 
     path = (path || []).concat(msg.metadata.seq)
 
-    /**
-     * @TODO
-     * check the hash also
-     */
-
     // check the message signature
     const isOk = await isValid(msg)
     if (!isOk) return { isOk: false, path }
@@ -133,10 +128,6 @@ export async function verifyLipmaas ({
 
     return await verifyLipmaas({ messageFromKey }, next, path)
 }
-
-/**
- * Create a linked list of messages.
- */
 
 export async function createBatch (
     user:Identity,
