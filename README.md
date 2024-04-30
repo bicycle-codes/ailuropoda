@@ -188,7 +188,7 @@ const post = await createMsg(
 
 ### `isValid (message)`
 
-Verify a message. This does not look at links, only the signature.
+Verify a message. This does not look at links, only the signature and hash.
 
 ```ts
 async function isValid (msg:SignedPost):Promise<boolean>
