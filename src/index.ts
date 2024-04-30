@@ -77,7 +77,7 @@ export async function create (
  * and check that the message's hash is correct.
  *
  * @param {SignedPost} msg The message to check
- * @returns {Promise<boolean>} True or false if the signature matches
+ * @returns {Promise<boolean>} True or false if the message is valid
  */
 export async function isValid (msg:SignedPost):Promise<boolean> {
     const { signature, key, ..._msg } = msg.metadata
