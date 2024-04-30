@@ -188,7 +188,6 @@ export function getLipmaaPath (index:number, prev?:number[]):number[] {
 }
 
 /**
- * @TODO
  * Create a new message following the given previous message.
  */
 export async function append (
@@ -197,7 +196,6 @@ export async function append (
     opts:{
         getBySeq:(seq:number) => Promise<SignedPost>
         content:Content,
-        limpaalink?:string|null,  // <-- the key of the lipmaa message
         prev:SignedPost
     }
 ):Promise<SignedPost> {

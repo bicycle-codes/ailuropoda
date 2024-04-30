@@ -288,6 +288,41 @@ async function getKey (i:number, msgs:SignedPost[]):Promise<string|null> {
 }
 ```
 
+### `append (user, crypto, opts)`
+
+Given a previous message and a function that will return a message by its
+sequence number, create a new message with the correct lipmaa key.
+
+```ts
+async function append (
+    user:Identity,
+    crypto:Implementation,
+    opts:{
+        getBySeq:(seq:number) => Promise<SignedPost>
+        content:Content,
+        prev:SignedPost
+    }
+):Promise<SignedPost>
+```
+
+#### append example
+
+```js
+const list = await createBatch(alice, alicesCrytpo, {
+    getKeyFromIndex: async (i, msgs) => {
+        return msgs[i].metadata.key
+    },
+}, msgs)
+
+const newMsg = await append(alice, alicesCrytpo, {
+    getBySeq: async (seq) => {
+        return list[seq - 1]  // 0 vs 1 indexed
+    },
+    prev: list[list.length - 1],
+    content: { text: 'hello 40' }
+})
+```
+
 ## docs
 Generated via typescript.
 
