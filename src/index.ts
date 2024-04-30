@@ -96,7 +96,7 @@ export async function isValid (msg:SignedPost):Promise<boolean> {
  * @param {{ messageFromKey }} opts A function that returns a message given
  *  a key
  * @param {SignedPost} msg The message to check
- * @param {number[]} [path] Just used for recursion
+ * @param {number[]} [path] Used internally, for recursion
  * @returns {Promise<{ isOk:boolean, path:number[] }>} The validity and the
  * path through the list.
  */
