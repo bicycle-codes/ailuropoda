@@ -106,10 +106,14 @@ export async function verifyLipmaas ({
     messageFromKey:(key:string)=>Promise<SignedPost>
 }, msg:SignedPost, path?:number[]):Promise<{ isOk: boolean, path:number[] }> {
     // find the shortest path to the first message
-    // we are assuming the `seq` number in the message
-    // is +1 the message's index
 
     path = (path || []).concat(msg.metadata.seq)
+
+    /**
+     * @TODO
+     * Check that the message at the index for the given message's `limpaa(seq)`
+     * is the message given by the lipmaa link.
+     */
 
     // check the message signature
     const isOk = await isValid(msg)
