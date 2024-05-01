@@ -152,6 +152,7 @@ const lipmaas = ([...Array(41).keys()]).map(n => {
 
 Note the `lipmaa` vs `n` properties match with [this diagram](https://github.com/AljoschaMeyer/bamboo?tab=readme-ov-file#links-and-entry-verification).
 
+![lipmaa diagram](image.png)
 
 ### `create (user, crypto, opts)`
 Create a message. This does not deal with lipmaa links. You would need to
