@@ -200,19 +200,18 @@ const { isOk } = await isValid(post)
 // => true
 ```
 
-### `verifyLipmaas (list, { messageFromKey }, msg, path)`
+### `verifyLipmaas ({ messageFromKey }, msg, path)`
 
 Check that all the messages between the given message and message number 1 are
 valid. This will use the shortest path from the given message to the
 first message.
 
 ```ts
-async function verifyLipmaas (
-    list:SignedPost[],
-    { messageFromKey }:{
-        messageFromKey:(key:string)=>Promise<SignedPost>
-    }, msg:SignedPost, path?:number[]
-):Promise<{
+async function verifyLipmaas ({
+    messageFromKey
+}:{
+    messageFromKey:(key:string)=>Promise<SignedPost>
+}, msg:SignedPost, path?:number[]):Promise<{
     isOk: boolean,
     path:number[]
 }>
@@ -229,7 +228,7 @@ const { isOk, path } = await verifyLipmaas(list2, {
 
 ### `getLipmaaPath (seq, prev)`
 Get the shortest path between the given sequence number and
-the first message.
+the first message. The parameter `prev` is used internally, for recusion.
 
 ```ts
 function getLipmaaPath (seq:number, prev?:number[]):number[]
