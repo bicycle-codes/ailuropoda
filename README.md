@@ -196,7 +196,7 @@ async function isValid (msg:SignedPost):Promise<boolean>
 ```
 
 ```ts
-const isOk = await isValid(post)
+const { isOk } = await isValid(post)
 // => true
 ```
 
