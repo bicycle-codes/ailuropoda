@@ -9,7 +9,7 @@
 
 Implementing [bamboo](https://github.com/AljoschaMeyer/bamboo), using only browser compatible cryptography.
 
-Ailuropoda is the science name for a panda.
+*Ailuropoda* is the science name for a panda.
 
 ## install
 
