@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@bicycle-codes/identity": "^0.7.2",
-    "@bicycle-codes/message": "^0.7.2",
+    "@bicycle-codes/message": "^0.8.3",
     "@noble/hashes": "^1.4.0",
     "@oddjs/odd": "^0.37.2",
     "json-canon": "^1.0.1",
