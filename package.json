@@ -24,7 +24,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@bicycle-codes/identity": "^0.7.2",
+    "@bicycle-codes/identity": "^0.9.7",
     "@bicycle-codes/message": "^0.8.3",
     "@noble/hashes": "^1.4.0",
     "@oddjs/odd": "^0.37.2",
