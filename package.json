@@ -39,7 +39,7 @@
     "@typescript-eslint/parser": "^8.0.0",
     "auto-changelog": "^2.4.0",
     "esbuild": "^0.24.0",
-    "eslint": "^8.57.0",
+    "eslint": "^9.20.1",
     "eslint-config-standard": "^17.1.0",
     "postcss-nesting": "^13.0.0",
     "tap-spec": "^5.0.0",
