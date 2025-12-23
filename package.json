@@ -1,6 +1,6 @@
 {
   "name": "@substrate-system/ailuropoda",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Bamboo implemented in typescript",
   "type": "module",
   "main": "dist/index.js",
