@@ -1,10 +1,12 @@
 import ts from 'monotonic-timestamp'
-import type { Implementation } from '@oddjs/odd/components/crypto/implementation'
-import { SignedMessage } from '@bicycle-codes/message'
-import { blake3 } from '@noble/hashes/blake3'
-import { DID, Identity, sign, verifyFromString } from '@bicycle-codes/identity'
+import { type DID } from '@substrate-system/keys'
+import { EccKeys, verify } from '@substrate-system/keys/ecc'
+import { blake3 } from '@noble/hashes/blake3.js'
 import { toString } from 'uint8arrays/to-string'
-import stringify from 'json-canon'
+import stringify from '@substrate-system/json-canon'
+
+export { EccKeys }
+export type { DID }
 
 export interface Metadata {
     timestamp:number;
@@ -17,7 +19,15 @@ export interface Metadata {
     author:DID;
 }
 
-export type SignedMetadata = SignedMessage<Metadata>
+export type SignedMetadata = Metadata & { signature:string }
+
+/**
+ * A simple identity object containing user info.
+ */
+export interface Identity {
+    did:DID;
+    username:string;
+}
 
 /**
  * `alt` should be an array of 'alt' strings, in the same order as
@@ -37,12 +47,12 @@ export type EncryptedPost = { metadata:SignedMetadata, content:string }
  * lipmaa link; it must be passed in.
  *
  * @param {Identity} user The identity that is creating the message
- * @param {Implementation} crypto A keystore instance
+ * @param {EccKeys} keys A keypair instance from @substrate-system/keys
  * @param opts Message data
  */
 export async function create (
     user:Identity,
-    crypto:Implementation,
+    keys:EccKeys,
     opts:{
         content:Content,
         limpaalink?:string|null,  // <-- the key of the lipmaa message
@@ -52,19 +62,22 @@ export async function create (
 ):Promise<SignedPost> {
     const metadata:Partial<SignedMetadata> = {
         timestamp: ts(),
-        proof: toString(blake3(stringify(opts.content)), 'base64pad'),
-        author: user.rootDID,
+        proof: toString(
+            blake3(new TextEncoder().encode(stringify(opts.content))),
+            'base64pad'
+        ),
+        author: user.did,
         prev: opts.prev?.metadata.key || null,  // hash of the previous message
         lipmaalink: opts.limpaalink,
         username: user.username,
         seq: (opts.prev?.metadata.seq || 0) + 1,
     }
 
-    metadata.signature = toString(
-        await sign(crypto.keystore, stringify(metadata)),
-        'base64pad'
+    metadata.signature = await keys.signAsString(stringify(metadata))
+    const key = toString(
+        blake3(new TextEncoder().encode(stringify(metadata))),
+        'base64url'
     )
-    const key = toString(blake3(stringify(metadata)), 'base64url')
 
     return {
         metadata: { ...metadata, key } as SignedMetadata,
@@ -83,11 +96,11 @@ export async function isValid (msg:SignedPost):Promise<boolean> {
     const { signature, key, ..._msg } = msg.metadata
     const str = stringify(_msg)
     const hash = toString(
-        blake3(stringify({ ..._msg, signature })),
+        blake3(new TextEncoder().encode(stringify({ ..._msg, signature }))),
         'base64url'
     )
     if (hash !== key) return false
-    const isOk = await verifyFromString(str, signature, msg.metadata.author)
+    const isOk = await verify(str, signature, msg.metadata.author)
     return isOk
 }
 
@@ -135,7 +148,7 @@ export async function verifyLipmaas ({
 
 export async function createBatch (
     user:Identity,
-    crypto:Implementation,
+    keys:EccKeys,
     opts: {
         getKeyFromIndex:(i:number, msgs:SignedPost[]) => Promise<string|null>
     },
@@ -162,7 +175,7 @@ export async function createBatch (
         )) :
         null
 
-    const newMsg = await create(user, crypto, {
+    const newMsg = await create(user, keys, {
         ...msg!,
         seq: out.length,
         prev: out[out.length - 1] || null,
@@ -171,7 +184,7 @@ export async function createBatch (
 
     out.push(newMsg)
 
-    return createBatch(user, crypto, opts, msgs, out)
+    return createBatch(user, keys, opts, msgs, out)
 }
 
 /**
@@ -193,7 +206,7 @@ export function getLipmaaPath (index:number, prev?:number[]):number[] {
  */
 export async function append (
     user:Identity,
-    crypto:Implementation,
+    keys:EccKeys,
     opts:{
         getBySeq:(seq:number) => Promise<SignedPost>
         content:Content,
@@ -202,7 +215,7 @@ export async function append (
 ):Promise<SignedPost> {
     const newSeq = opts.prev.metadata.seq + 1
     const lipmaaNumber = lipmaaLink(newSeq)
-    const newMsg = await create(user, crypto, {
+    const newMsg = await create(user, keys, {
         seq: newSeq,
         content: opts.content,
         prev: opts.prev,

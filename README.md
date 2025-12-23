@@ -1,9 +1,11 @@
 # ailuropoda
 
-![tests](https://github.com/bicycle-codes/ailuropoda/actions/workflows/nodejs.yml/badge.svg)
-[![types](https://img.shields.io/npm/types/@bicycle-codes/ailuropoda?style=flat-square)](README.md)
+[![tests](https://img.shields.io/github/actions/workflow/status/substrate-system/ailuropoda/nodejs.yml?style=flat-square)](https://github.com/substrate-system/ailuropoda/actions/workflows/nodejs.yml)
+[![types](https://img.shields.io/npm/types/@substrate-system/ailuropoda?style=flat-square)](README.md)
 [![module](https://img.shields.io/badge/module-ESM%2FCJS-blue?style=flat-square)](README.md)
 [![semantic versioning](https://img.shields.io/badge/semver-2.0.0-blue?logo=semver&style=flat-square)](https://semver.org/)
+[![Common Changelog](https://nichoth.github.io/badge/common-changelog.svg)](./CHANGELOG.md)
+[![install size](https://flat.badgen.net/packagephobia/install/@substrate-system/ailuropoda)](https://packagephobia.com/result?p=@substrate-system/ailuropoda)
 [![license](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE)
 
 
@@ -14,7 +16,7 @@ Implementing [bamboo](https://github.com/AljoschaMeyer/bamboo), using only brows
 ## install
 
 ```sh
-npm i -S @bicycle-codes/ailuropoda
+npm i -S @substrate-system/ailuropoda
 ```
 
 ## use
@@ -29,7 +31,7 @@ import {
     getLipmaaPath,
     isValid,
     verifyLipmaas
-} from '@bicycle-codes/ailuropoda'
+} from '@substrate-system/ailuropoda'
 ```
 
 ## data format
@@ -52,9 +54,15 @@ interface Metadata {
 
 ### SignedMetadata
 ```ts
-import { SignedMessage } from '@bicycle-codes/message'
+type SignedMetadata = Metadata & { signature:string }
+```
 
-type SignedMetadata = SignedMessage<Metadata>
+### Identity
+```ts
+interface Identity {
+    did:DID;
+    username:string;
+}
 ```
 
 ### Content
@@ -77,15 +85,13 @@ Use the function `createBatch` to create a list with lipmaa links.
 See [the diagram](https://github.com/AljoschaMeyer/bamboo?tab=readme-ov-file#links-and-entry-verification) for a nice visualization of the list structure.
 
 ```ts
-import { Identity, create as createID } from '@bicycle-codes/identity'
-import { createCryptoComponent } from '@ssc-half-light/node-components'
-import { createBatch } from '@bicycle-codes/ailuropoda'
+import { createBatch, Identity, EccKeys } from '@substrate-system/ailuropoda'
 
-const alicesCrytpo = await createCryptoComponent()
-const alice = await createID(alicesCrytpo, {
-    humanName: 'alice',
-    humanReadableDeviceName: 'computer'
-})
+const alicesKeys = await EccKeys.create()
+const alice:Identity = {
+    did: alicesKeys.DID,
+    username: 'alice'
+}
 
 const newMsgs = [
     { content: { text: 'hello 1' } },
@@ -95,7 +101,7 @@ const newMsgs = [
     { content: { text: 'hello 5' } }
 ]
 
-const list = await createBatch(alice, alicesCrytpo, {
+const list = await createBatch(alice, alicesKeys, {
     // we are just using an in-memory array of messages
     getKeyFromIndex: async (i:number, msgs:SignedPost[]) => {
         const msg = msgs[i]
@@ -161,7 +167,7 @@ pass them in.
 ```ts
 async function create (
     user:Identity,
-    crypto:Implementation,
+    keys:EccKeys,
     opts:{
         content:Content,
         limpaalink?:string|null,  // <-- the key of the lipmaa message
@@ -172,11 +178,11 @@ async function create (
 ```
 
 ```js
-import { create as createMsg } from '@bicycle-codes/ailuropoda'
+import { create as createMsg } from '@substrate-system/ailuropoda'
 
 const post = await createMsg(
     alice,
-    alicesCrytpo,
+    alicesKeys,
     {
         seq: 1,
         prev: null,
@@ -245,7 +251,7 @@ Create a linked list of the given messages, with lipmaa links.
 ```ts
 async function createBatch (
     user:Identity,
-    crypto:Implementation,
+    keys:EccKeys,
     opts: {
         getKeyFromIndex:(i:number, msgs:SignedPost[]) => Promise<string|null>
     },
@@ -277,7 +283,7 @@ const newMsgs = [
     { content: { text: 'hello 5' } }
 ]
 
-const list = await createBatch(alice, alicesCrytpo, {
+const list = await createBatch(alice, alicesKeys, {
     getKeyFromIndex: getKey
 }, newMsgs)
 
@@ -296,7 +302,7 @@ sequence number, create a new message with the correct lipmaa key.
 ```ts
 async function append (
     user:Identity,
-    crypto:Implementation,
+    keys:EccKeys,
     opts:{
         getBySeq:(seq:number) => Promise<SignedPost>
         content:Content,
@@ -308,13 +314,13 @@ async function append (
 #### append example
 
 ```js
-const list = await createBatch(alice, alicesCrytpo, {
+const list = await createBatch(alice, alicesKeys, {
     getKeyFromIndex: async (i, msgs) => {
         return msgs[i].metadata.key
     },
 }, msgs)
 
-const newMsg = await append(alice, alicesCrytpo, {
+const newMsg = await append(alice, alicesKeys, {
     getBySeq: async (seq) => {
         return list[seq - 1]  // 0 vs 1 indexed
     },
@@ -326,4 +332,4 @@ const newMsg = await append(alice, alicesCrytpo, {
 ## docs
 Generated via typescript.
 
-[bicycle-codes.github.io/ailuropoda](https://bicycle-codes.github.io/ailuropoda/)
+[substrate-system.github.io/ailuropoda](https://substrate-system.github.io/ailuropoda/)
