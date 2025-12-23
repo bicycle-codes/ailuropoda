@@ -1,7 +1,4 @@
-import { test } from '@bicycle-codes/tapzero'
-import { createCryptoComponent } from '@ssc-half-light/node-components'
-import { Identity, create as createID } from '@bicycle-codes/identity'
-import { Implementation } from '@oddjs/odd/lib/components/crypto/implementation'
+import { test } from '@substrate-system/tapzero'
 import {
     create as createMsg,
     SignedPost,
@@ -10,19 +7,21 @@ import {
     getLipmaaPath,
     isValid,
     verifyLipmaas,
-    append
+    append,
+    Identity,
+    EccKeys
 } from '../src/index.js'
 
 let alice:Identity
-let alicesCrytpo:Implementation
+let alicesKeys:EccKeys
 
 test('setup', async t => {
-    alicesCrytpo = await createCryptoComponent()
+    alicesKeys = await EccKeys.create()
 
-    alice = await createID(alicesCrytpo, {
-        humanName: 'alice',
-        humanReadableDeviceName: 'computer'
-    })
+    alice = {
+        did: alicesKeys.DID,
+        username: 'alice'
+    }
 
     t.ok(alice, 'create an identity')
 })
@@ -31,7 +30,7 @@ let post:SignedPost
 test('create a new message', async t => {
     post = await createMsg(
         alice,
-        alicesCrytpo,
+        alicesKeys,
         {
             seq: 1,
             prev: null,
@@ -85,7 +84,7 @@ test('create a linked list', async t => {
         { content: { text: 'hello 5' } }
     ]
 
-    list = await createBatch(alice, alicesCrytpo, {
+    list = await createBatch(alice, alicesKeys, {
         getKeyFromIndex: getKey
     }, newMsgs)
 
@@ -101,7 +100,7 @@ test('create a linked list', async t => {
     })
 
     // create a list with 40 items
-    list2 = await createBatch(alice, alicesCrytpo, {
+    list2 = await createBatch(alice, alicesKeys, {
         getKeyFromIndex: getKey
     }, arr)
 
@@ -170,13 +169,13 @@ test('append a message', async t => {
         return { content: { text: 'hello ' + (n + 1) } }
     })
 
-    const list = await createBatch(alice, alicesCrytpo, {
+    const list = await createBatch(alice, alicesKeys, {
         getKeyFromIndex: async (i, msgs) => {
             return msgs[i].metadata.key
         },
     }, msgs)
 
-    const newMsg = await append(alice, alicesCrytpo, {
+    const newMsg = await append(alice, alicesKeys, {
         getBySeq: async (seq) => {
             return list[seq - 1]
         },
